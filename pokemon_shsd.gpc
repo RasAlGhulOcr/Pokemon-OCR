@@ -1,0 +1,25 @@
+#pragma METAINFO("pokemon_shsd", 1, 0, "rasalghul")
+
+// VARIABLES
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+bool escape;
+
+main {
+	
+	if(gcv_ready()) { 
+		escape = gcv_read(3); 
+	}
+		
+	if(escape) {
+		combo_run(cEscape);
+	}
+}
+
+combo cEscape {
+	wait(300);
+	set_val(BUTTON_15, 100);
+	wait(300);
+	set_val(BUTTON_15, 0);
+}
