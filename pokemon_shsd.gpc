@@ -22,6 +22,7 @@ bool attack_4_se;
 bool attack_4_ef;
 bool attack_4_ne;
 bool attack_found = FALSE;
+bool nofight;
 
 #define presstime 300
 
@@ -50,13 +51,14 @@ main {
 		attack_4_se = gcv_read(20);
 		attack_4_ef = gcv_read(21);
 		attack_4_ne = gcv_read(22);
+		nofight = gcv_read(23);
 	}
 	
 	if(fight) {
-		combo_stop(cAttack1);
-		combo_stop(cAttack2);
-		combo_stop(cAttack3);
-		combo_stop(cAttack4);
+		//combo_stop(cAttack1);
+		//combo_stop(cAttack2);
+		//combo_stop(cAttack3);
+		//combo_stop(cAttack4);
 		combo_run(cFight);
 	}
 	
@@ -123,9 +125,9 @@ main {
 	if(attack_4_ne && !attack_found) {
 		combo_run(cAttack4);
 	}
-	
-	if(attack_found) {
-		printf("Attack founded");
+		
+	if(nofight) {
+		attack_found = FALSE;
 	}
 }
 

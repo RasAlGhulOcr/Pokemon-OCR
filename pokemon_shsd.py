@@ -12,9 +12,11 @@ Attack_3_Setup = 3
 Attack_4_Setup = 1
 
 # Flags
+noFight = 0
 inFight = 0
 inPoke = 0
 inBag = 0
+inBag1 = 0
 inEscape = 0
 inAttack = 0
 Attack_1 = 0
@@ -24,10 +26,13 @@ Attack_4 = 0
 Attack_Selection = 0
 
 # Datasets images
+NOFIGHT_DATASET = 708.2083026906703
+NOFIGHT1_DATASET = 17256.413416466356
 FIGHT_DATASET = 899.4592820133661
 FIGHT1_DATASET = 4156.635057351078
 POKE_DATASET = 672.0111606216076
 BAG_DATASET = 916.8969407736073
+INBAG_DATASET = 626.0942421073684
 ESCAPE_DATASET = 802.7602381782496
 ATTACK_DATASET = 158.89619252832964
 HP_SELF_DATASET = 1504.2439961655157
@@ -62,6 +67,7 @@ ATTACK3_NE_OFFSET = 19
 ATTACK4_SE_OFFSET = 20
 ATTACK4_EF_OFFSET = 21
 ATTACK4_NE_OFFSET = 22
+NOFIGHT_OFFSET = 23
 
 # OCR Data
 ATTACK1_DATA_OCR = "unknown"
@@ -69,6 +75,7 @@ ATTACK2_DATA_OCR = "unknown"
 ATTACK3_DATA_OCR = "unknown"
 ATTACK4_DATA_OCR = "unknown"
 
+#cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 1)
 class GCVWorker:
     def __init__(self, width, height):
         os.chdir(os.path.dirname(__file__))
@@ -79,26 +86,26 @@ class GCVWorker:
         self.gcvdata = bytearray([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                                   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                                   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
+        self.noFight = True
         self.inFight = True
         self.inPoke = True
         self.inBag = True
+        self.inBag1 = True
         self.inHpSelf = True
         self.inHpEnemy = True
         self.inEscape = True
         self.inAttack = True
+        self.noFightOcvOn = True
         self.inFightOcvOn = True
         self.inPokeOcvOn = True
         self.inBagOcvOn = True
         self.inEscapeOcvOn = True
         self.inAttackOcvOn = True
-        self.inFightOcvOff = False
-        self.inPokeOcvOff = False
-        self.inBagOcvOff = False
-        self.inEscapeOcvOff = False
-        self.inAttackOcvOff = False
+        self.noFightImg = cv2.imread('img/no_fight_1.jpg')
         self.inFightImg = cv2.imread('img/fight.jpg')
         self.inPokeImg = cv2.imread('img/pokemon.jpg')
         self.inBagImg = cv2.imread('img/bag.jpg')
+        self.inBag1Img = cv2.imread('img/inBag.jpg')
         self.inHpSelfImg = cv2.imread('img/hp_self.jpg')
         self.inHpEnemyImg = cv2.imread('img/hp_enemy.jpg')
         self.inEscapeImg = cv2.imread('img/escape.jpg')
@@ -108,38 +115,41 @@ class GCVWorker:
     def __del__(self):
         del self.scale
         del self.gcvdata
+        del self.noFight
         del self.inFight
         del self.inPoke
         del self.inBag
+        del self.inBag1
         del self.inHpSelf
         del self.inHpEnemy
         del self.inEscape
         del self.inAttack
+        del self.noFightOcvOn
         del self.inFightOcvOn
         del self.inPokeOcvOn
         del self.inBagOcvOn
         del self.inEscapeOcvOn
         del self.inAttackOcvOn
-        del self.inFightOcvOff
-        del self.inPokeOcvOff
-        del self.inBagOcvOff
-        del self.inEscapeOcvOff
-        del self.inAttackOcvOff
-    
+
     def process(self, frame):
         global ATTACK1_DATA_OCR
         global ATTACK2_DATA_OCR
         global ATTACK3_DATA_OCR
         global ATTACK4_DATA_OCR
+        global noFight
         global inFight
         global inPoke
         global inBag
+        global inBag1
         global inEscape
         global inAttack
+        global NOFIGHT_DATASET
+        global NOFIGHT1_DATASET
         global FIGHT_DATASET
         global FIGHT1_DATASET
         global POKE_DATASET
         global BAG_DATASET
+        global BAG1_DATASET
         global ESCAPE_DATASET
         global ATTACK_DATASET
         global HP_SELF_DATASET
@@ -165,70 +175,81 @@ class GCVWorker:
 
 ########################################################################################################################
 # Output Layout
-        if inFight == 0:
-            cv2.putText(frame, "No Fight Mode: " + str(self.inFightOcvOff), (5, 40),
+        if noFight == 1:
+            cv2.putText(frame, "No Fight: " + str(self.noFightOcvOn), (5, 80),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inFight == 1:
-            cv2.putText(frame, "In Fight Mode: " + str(self.inFightOcvOn), (5, 40),
+            cv2.putText(frame, "Fight Button: " + str(self.inFightOcvOn), (5, 40),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
-                        cv2.LINE_AA)
-
-        if inPoke == 0:
-            cv2.putText(frame, "No Poke Mode: " + str(self.inPokeOcvOff), (5, 80),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inPoke == 1:
-            cv2.putText(frame, "In Poke Mode: " + str(self.inPokeOcvOn), (5, 80),
+            cv2.putText(frame, "Poke Button: " + str(self.inPokeOcvOn), (5, 40),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
-                        cv2.LINE_AA)
-
-        if inBag == 0:
-            cv2.putText(frame, "No Bag Mode: " + str(self.inBagOcvOff), (5, 120),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inBag == 1:
-            cv2.putText(frame, "In Bag Mode: " + str(self.inBagOcvOn), (5, 120),
+            cv2.putText(frame, "Bag Button: " + str(self.inBagOcvOn), (5, 40),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
-        if inEscape == 0:
-            cv2.putText(frame, "No Escape Mode: " + str(self.inEscapeOcvOff), (5, 160),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
+        if inBag1 == 1:
+            cv2.putText(frame, "Inside Bag: " + str(self.inBagOcvOn), (100, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2,
                         cv2.LINE_AA)
 
         if inEscape == 1:
-            cv2.putText(frame, "In Escape Mode: " + str(self.inEscapeOcvOn), (5, 160),
+            cv2.putText(frame, "Escape Button: " + str(self.inEscapeOcvOn), (5, 40),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
         if inAttack == 1:
-            cv2.putText(frame, "In Attack Mode: " + str(self.inAttackOcvOn), (5, 200),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2,
+            cv2.putText(frame, "In Attack Mode: " + str(self.inAttackOcvOn), (5, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
-            cv2.putText(frame, "Attack 1: " + str(ATTACK1_DATA_OCR), (5, 240),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2,
+            cv2.putText(frame, "Attack 1: " + str(ATTACK1_DATA_OCR), (5, 80),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
-            cv2.putText(frame, "Attack 2: " + str(ATTACK2_DATA_OCR), (5, 280),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2,
+            cv2.putText(frame, "Attack 2: " + str(ATTACK2_DATA_OCR), (5, 120),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
-            cv2.putText(frame, "Attack 3: " + str(ATTACK3_DATA_OCR), (5, 320),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2,
+            cv2.putText(frame, "Attack 3: " + str(ATTACK3_DATA_OCR), (5, 160),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
-            cv2.putText(frame, "Attack 4: " + str(ATTACK4_DATA_OCR), (5, 360),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2,
+            cv2.putText(frame, "Attack 4: " + str(ATTACK4_DATA_OCR), (5, 200),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2,
                         cv2.LINE_AA)
 
 ########################################################################################################################
 # Main
         # noFight
+        picture_noFight = frame[992:1075, 16:68]
+        similar_noFight = cv2.norm(self.noFightImg, picture_noFight)
+        if similar_noFight == NOFIGHT_DATASET and self.noFight:
+            self.noFight = False
+            noFight = 1
+            print("Reset GPC Fight Data")
+            self.gcvdata[NOFIGHT_OFFSET] = True
+        elif similar_noFight == NOFIGHT1_DATASET and self.noFight:
+            self.noFight = False
+            noFight = 1
+            print("Reset GPC Fight Data")
+            self.gcvdata[NOFIGHT_OFFSET] = True
+        elif similar_noFight == NOFIGHT_DATASET:
+            pass
+        elif similar_noFight == NOFIGHT1_DATASET:
+            pass
+        else:
+            self.noFight = True
+            self.gcvdata[NOFIGHT_OFFSET] = False
+            noFight = 0
+
         # Fight
         picture_inFight = frame[625:697, 1773:1875]
         similar_inFight = cv2.norm(self.inFightImg, picture_inFight)
@@ -293,7 +314,7 @@ class GCVWorker:
             inPoke = 0
             self.gcvdata[POKE_OFFSET] = False
 
-        # Bag
+        # Bag Fight
         picture_inBag = frame[860:932, 1773:1875]
         similar_inBag = cv2.norm(self.inBagImg, picture_inBag)
         if similar_inBag == BAG_DATASET and self.inBag:
@@ -335,6 +356,19 @@ class GCVWorker:
             self.inHpSelf = True
             inBag = 0
             self.gcvdata[BAG_OFFSET] = False
+
+        # Inside Bag
+        picture_inBag1 = frame[13:60, 1502:1591]
+        similar_inBag1 = cv2.norm(self.inBag1Img, picture_inBag1)
+
+        if similar_inBag1 == INBAG_DATASET and self.inBag1:
+            self.inBag1 = False
+            inBag1 = 1
+        elif similar_inBag1 == INBAG_DATASET:
+            pass
+        else:
+            self.inBag1 = True
+            inBag1 = 0
 
         # Escape
         picture_inEscape = frame[976:1048, 1773:1875]
