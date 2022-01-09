@@ -5,6 +5,12 @@ import re
 #import gtuner
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
+# Setup Attack order
+Attack_1_Setup = 2
+Attack_2_Setup = 4
+Attack_3_Setup = 3
+Attack_4_Setup = 1
+
 # Flags
 inFight = 0
 inPoke = 0
@@ -15,6 +21,7 @@ Attack_1 = 0
 Attack_2 = 0
 Attack_3 = 0
 Attack_4 = 0
+Attack_Selection = 0
 
 # Datasets images
 FIGHT_DATASET = 899.4592820133661
@@ -43,6 +50,18 @@ HP_SELF2_OFFSET = 7
 HP_ENEMY_OFFSET = 8
 HP_ENEMY1_OFFSET = 9
 HP_ENEMY2_OFFSET = 10
+ATTACK1_SE_OFFSET = 11
+ATTACK1_EF_OFFSET = 12
+ATTACK1_NE_OFFSET = 13
+ATTACK2_SE_OFFSET = 14
+ATTACK2_EF_OFFSET = 15
+ATTACK2_NE_OFFSET = 16
+ATTACK3_SE_OFFSET = 17
+ATTACK3_EF_OFFSET = 18
+ATTACK3_NE_OFFSET = 19
+ATTACK4_SE_OFFSET = 20
+ATTACK4_EF_OFFSET = 21
+ATTACK4_NE_OFFSET = 22
 
 # OCR Data
 ATTACK1_DATA_OCR = "unknown"
@@ -58,7 +77,8 @@ class GCVWorker:
         self.scale = width != 1920 or height != 1080
         #self.gcvdata = bytearray([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
         self.gcvdata = bytearray([0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                                  0xFF, 0xFF, 0xFF])
+                                  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                                  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
         self.inFight = True
         self.inPoke = True
         self.inBag = True
@@ -137,6 +157,7 @@ class GCVWorker:
         global Attack_2
         global Attack_3
         global Attack_4
+        global Attack_Selection
 
         # If needed, scale frame to 1920x1080
         if self.scale:
@@ -145,8 +166,8 @@ class GCVWorker:
 ########################################################################################################################
 # Output Layout
         if inFight == 0:
-            cv2.putText(frame, "In Fight Mode: " + str(self.inFightOcvOff), (5, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+            cv2.putText(frame, "No Fight Mode: " + str(self.inFightOcvOff), (5, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inFight == 1:
@@ -155,8 +176,8 @@ class GCVWorker:
                         cv2.LINE_AA)
 
         if inPoke == 0:
-            cv2.putText(frame, "In Poke Mode: " + str(self.inPokeOcvOff), (5, 80),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+            cv2.putText(frame, "No Poke Mode: " + str(self.inPokeOcvOff), (5, 80),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inPoke == 1:
@@ -165,8 +186,8 @@ class GCVWorker:
                         cv2.LINE_AA)
 
         if inBag == 0:
-            cv2.putText(frame, "In Bag Mode: " + str(self.inBagOcvOff), (5, 120),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+            cv2.putText(frame, "No Bag Mode: " + str(self.inBagOcvOff), (5, 120),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inBag == 1:
@@ -175,8 +196,8 @@ class GCVWorker:
                         cv2.LINE_AA)
 
         if inEscape == 0:
-            cv2.putText(frame, "In Escape Mode: " + str(self.inEscapeOcvOff), (5, 160),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2,
+            cv2.putText(frame, "No Escape Mode: " + str(self.inEscapeOcvOff), (5, 160),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2,
                         cv2.LINE_AA)
 
         if inEscape == 1:
@@ -323,7 +344,6 @@ class GCVWorker:
             inEscape = 1
             print("Found Escape Button")
             self.gcvdata[ESCAPE_OFFSET] = True
-            print(self.inEscape)
         elif similar_inEscape == ESCAPE_DATASET:
             pass
         else:
@@ -363,19 +383,23 @@ class GCVWorker:
             img_cv_attack4 = cv2.imread(r'img/attack4/temp_img.jpg')
             img_rgb_attack4 = cv2.cvtColor(img_cv_attack4, cv2.COLOR_BGR2RGB)
             ATTACK4_DATA = pytesseract.image_to_string(img_rgb_attack4, config=custom_config)
-            #check attack data
 
+            #check attack data
             def check_pattern1(s):
                 global ATTACK1_DATA_OCR
+                global Attack_1
                 if re.match("Se[a-z]+", s):
                     print("Attack 1: Sehr Effektiv")
                     ATTACK1_DATA_OCR = "Sehr Effektiv"
+                    Attack_1 = 4
                 elif re.match("Ef[a-z]+", s):
                     print("Attack 1: Effektiv")
                     ATTACK1_DATA_OCR = "Effektiv"
+                    Attack_1 = 3
                 elif re.match("Ni[a-z]+", s):
                     print("Attack 1: Nicht Effektiv")
                     ATTACK1_DATA_OCR = "Nicht Effektiv"
+                    Attack_1 = 2
                 elif re.match("Wirkungslos+", s):
                     print("Attack 1: Wirkungslos")
                     ATTACK1_DATA_OCR = "Wirkungslos"
@@ -385,15 +409,19 @@ class GCVWorker:
 
             def check_pattern2(s):
                 global ATTACK2_DATA_OCR
+                global Attack_2
                 if re.match("Se[a-z]+", s):
                     print("Attack 2: Sehr Effektiv")
                     ATTACK2_DATA_OCR = "Sehr Effektiv"
+                    Attack_2 = 4
                 elif re.match("Ef[a-z]+", s):
                     print("Attack 2: Effektiv")
                     ATTACK2_DATA_OCR = "Effektiv"
+                    Attack_2 = 3
                 elif re.match("Ni[a-z]+", s):
                     print("Attack 2: Nicht Effektiv")
                     ATTACK2_DATA_OCR = "Nicht Effektiv"
+                    Attack_2 = 2
                 elif re.match("Wirkungslos+", s):
                     print("Attack 2: Wirkungslos")
                     ATTACK2_DATA_OCR = "Wirkungslos"
@@ -403,15 +431,19 @@ class GCVWorker:
 
             def check_pattern3(s):
                 global ATTACK3_DATA_OCR
+                global Attack_3
                 if re.match("Se[a-z]+", s):
                     print("Attack 3: Sehr Effektiv")
                     ATTACK3_DATA_OCR = "Sehr Effektiv"
+                    Attack_3 = 4
                 elif re.match("Ef[a-z]+", s):
                     print("Attack 3: Effektiv")
                     ATTACK3_DATA_OCR = "Effektiv"
+                    Attack_3 = 3
                 elif re.match("Ni[a-z]+", s):
                     print("Attack 3: Nicht Effektiv")
                     ATTACK3_DATA_OCR = "Nicht Effektiv"
+                    Attack_3 = 2
                 elif re.match("Wirkungslos+", s):
                     print("Attack 3: Wirkungslos")
                     ATTACK3_DATA_OCR = "Wirkungslos"
@@ -421,31 +453,641 @@ class GCVWorker:
 
             def check_pattern4(s):
                 global ATTACK4_DATA_OCR
+                global Attack_4
                 if re.match("Se[a-z]+", s):
                     print("Attack 4: Sehr Effektiv")
                     ATTACK4_DATA_OCR = "Sehr Effektiv"
+                    Attack_4 = 4
                 elif re.match("Ef[a-z]+", s):
                     print("Attack 4: Effektiv")
                     ATTACK4_DATA_OCR = "Effektiv"
+                    Attack_4 = 3
                 elif re.match("Ni[a-z]+", s):
                     print("Attack 4: Nicht Effektiv")
                     ATTACK4_DATA_OCR = "Nicht Effektiv"
+                    Attack_4 = 2
                 elif re.match("Wirkungslos+", s):
                     print("Attack 4: Wirkungslos")
                     ATTACK4_DATA_OCR = "Wirkungslos"
                 else:
                     print("No Attack Data Found")
                     ATTACK4_DATA_OCR = "unknown"
+
             check_pattern1(ATTACK1_DATA)
             check_pattern2(ATTACK2_DATA)
             check_pattern3(ATTACK3_DATA)
             check_pattern4(ATTACK4_DATA)
             self.gcvdata[ATTACK_OFFSET] = True
+
+            if Attack_Selection == 0:
+                if Attack_1 == 4 or Attack_2 == 4 or Attack_3 == 4 or Attack_4 == 4:
+                    Attack_Selection = 4
+                elif Attack_1 == 3 or Attack_2 == 3 or Attack_3 == 3 or Attack_4 == 3:
+                    Attack_Selection = 3
+                elif Attack_1 == 2 or Attack_2 == 2 or Attack_3 == 2 or Attack_4 == 2:
+                    Attack_Selection = 2
+
+            if Attack_1_Setup == 4 and Attack_Selection == 4:
+                if Attack_1 == 4:
+                    self.gcvdata[ATTACK1_SE_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 4:
+                        self.gcvdata[ATTACK2_SE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 4:
+                            self.gcvdata[ATTACK3_SE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 4:
+                                self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 4:
+                            self.gcvdata[ATTACK4_SE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 4:
+                                self.gcvdata[ATTACK3_SE_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 4:
+                        self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 4:
+                            self.gcvdata[ATTACK2_SE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 4:
+                                self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 4:
+                            self.gcvdata[ATTACK4_SE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 4:
+                                self.gcvdata[ATTACK2_SE_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 4:
+                        self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 4:
+                            self.gcvdata[ATTACK2_SE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 4:
+                                self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 4:
+                            self.gcvdata[ATTACK3_SE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 4:
+                                self.gcvdata[ATTACK2_SE_OFFSET] = True
+            elif Attack_2_Setup == 4 and Attack_Selection == 4:
+                if Attack_2 == 4:
+                    self.gcvdata[ATTACK2_SE_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 4:
+                        self.gcvdata[ATTACK1_SE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 4:
+                            self.gcvdata[ATTACK3_SE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 4:
+                                self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 4:
+                            self.gcvdata[ATTACK4_SE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 4:
+                                self.gcvdata[ATTACK3_SE_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 4:
+                        self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 4:
+                            self.gcvdata[ATTACK1_SE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 4:
+                                self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 4:
+                            self.gcvdata[ATTACK4_SE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 4:
+                                self.gcvdata[ATTACK1_SE_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 4:
+                        self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 4:
+                            self.gcvdata[ATTACK1_SE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 4:
+                                self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 4:
+                            self.gcvdata[ATTACK3_SE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 4:
+                                self.gcvdata[ATTACK1_SE_OFFSET] = True
+            elif Attack_3_Setup == 4 and Attack_Selection == 4:
+                if Attack_3 == 4:
+                    self.gcvdata[ATTACK3_SE_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 4:
+                        self.gcvdata[ATTACK1_SE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 4:
+                            self.gcvdata[ATTACK2_SE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 4:
+                                self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 4:
+                            self.gcvdata[ATTACK4_SE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 4:
+                                self.gcvdata[ATTACK2_SE_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 4:
+                        self.gcvdata[ATTACK2_SE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 4:
+                            self.gcvdata[ATTACK1_SE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 4:
+                                self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 4:
+                            self.gcvdata[ATTACK4_SE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 4:
+                                self.gcvdata[ATTACK1_SE_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 4:
+                        self.gcvdata[ATTACK4_SE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 4:
+                            self.gcvdata[ATTACK1_SE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 4:
+                                self.gcvdata[ATTACK2_SE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 4:
+                            self.gcvdata[ATTACK2_SE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 4:
+                                self.gcvdata[ATTACK1_SE_OFFSET] = True
+            elif Attack_4_Setup == 4 and Attack_Selection == 4:
+                if Attack_4 == 4:
+                    self.gcvdata[ATTACK4_SE_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 4:
+                        self.gcvdata[ATTACK1_SE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 4:
+                            self.gcvdata[ATTACK2_SE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 4:
+                                self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 4:
+                            self.gcvdata[ATTACK3_SE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 4:
+                                self.gcvdata[ATTACK2_SE_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 4:
+                        self.gcvdata[ATTACK2_SE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 4:
+                            self.gcvdata[ATTACK1_SE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 4:
+                                self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 4:
+                            self.gcvdata[ATTACK3_SE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 4:
+                                self.gcvdata[ATTACK1_SE_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 4:
+                        self.gcvdata[ATTACK3_SE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 4:
+                            self.gcvdata[ATTACK1_SE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 4:
+                                self.gcvdata[ATTACK2_SE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 4:
+                            self.gcvdata[ATTACK2_SE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 4:
+                                self.gcvdata[ATTACK1_SE_OFFSET] = True
+            #####
+            if Attack_1_Setup == 4 and Attack_Selection == 3:
+                if Attack_1 == 3:
+                    self.gcvdata[ATTACK1_EF_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 3:
+                        self.gcvdata[ATTACK2_EF_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 3:
+                            self.gcvdata[ATTACK3_EF_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 3:
+                                self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 3:
+                            self.gcvdata[ATTACK4_EF_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 3:
+                                self.gcvdata[ATTACK3_EF_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 3:
+                        self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 3:
+                            self.gcvdata[ATTACK2_EF_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 3:
+                                self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 3:
+                            self.gcvdata[ATTACK4_EF_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 3:
+                                self.gcvdata[ATTACK2_EF_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 3:
+                        self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 3:
+                            self.gcvdata[ATTACK2_EF_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 3:
+                                self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 3:
+                            self.gcvdata[ATTACK3_EF_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 3:
+                                self.gcvdata[ATTACK2_EF_OFFSET] = True
+            elif Attack_2_Setup == 4 and Attack_Selection == 3:
+                if Attack_2 == 3:
+                    self.gcvdata[ATTACK2_EF_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 3:
+                        self.gcvdata[ATTACK1_EF_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 3:
+                            self.gcvdata[ATTACK3_EF_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 3:
+                                self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 3:
+                            self.gcvdata[ATTACK4_EF_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 3:
+                                self.gcvdata[ATTACK3_EF_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 3:
+                        self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 3:
+                            self.gcvdata[ATTACK1_EF_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 3:
+                                self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 3:
+                            self.gcvdata[ATTACK4_EF_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 3:
+                                self.gcvdata[ATTACK1_EF_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 3:
+                        self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 3:
+                            self.gcvdata[ATTACK1_EF_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 3:
+                                self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 3:
+                            self.gcvdata[ATTACK3_EF_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 3:
+                                self.gcvdata[ATTACK1_EF_OFFSET] = True
+            elif Attack_3_Setup == 4 and Attack_Selection == 3:
+                if Attack_3 == 3:
+                    self.gcvdata[ATTACK3_EF_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 3:
+                        self.gcvdata[ATTACK1_EF_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 3:
+                            self.gcvdata[ATTACK2_EF_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 3:
+                                self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 3:
+                            self.gcvdata[ATTACK4_EF_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 3:
+                                self.gcvdata[ATTACK2_EF_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 3:
+                        self.gcvdata[ATTACK2_EF_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 3:
+                            self.gcvdata[ATTACK1_EF_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 3:
+                                self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 3:
+                            self.gcvdata[ATTACK4_EF_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 3:
+                                self.gcvdata[ATTACK1_EF_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 3:
+                        self.gcvdata[ATTACK4_EF_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 3:
+                            self.gcvdata[ATTACK1_EF_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 3:
+                                self.gcvdata[ATTACK2_EF_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 3:
+                            self.gcvdata[ATTACK2_EF_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 3:
+                                self.gcvdata[ATTACK1_EF_OFFSET] = True
+            elif Attack_4_Setup == 4 and Attack_Selection == 3:
+                if Attack_4 == 3:
+                    self.gcvdata[ATTACK4_EF_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 3:
+                        self.gcvdata[ATTACK1_EF_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 3:
+                            self.gcvdata[ATTACK2_EF_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 3:
+                                self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 3:
+                            self.gcvdata[ATTACK3_EF_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 3:
+                                self.gcvdata[ATTACK2_EF_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 3:
+                        self.gcvdata[ATTACK2_EF_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 3:
+                            self.gcvdata[ATTACK1_EF_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 3:
+                                self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 3:
+                            self.gcvdata[ATTACK3_EF_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 3:
+                                self.gcvdata[ATTACK1_EF_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 3:
+                        self.gcvdata[ATTACK3_EF_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 3:
+                            self.gcvdata[ATTACK1_EF_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 3:
+                                self.gcvdata[ATTACK2_EF_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 3:
+                            self.gcvdata[ATTACK2_EF_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 3:
+                                self.gcvdata[ATTACK1_EF_OFFSET] = True
+            #####
+            if Attack_1_Setup == 4 and Attack_Selection == 2:
+                if Attack_1 == 2:
+                    self.gcvdata[ATTACK1_NE_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 2:
+                        self.gcvdata[ATTACK2_NE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 2:
+                            self.gcvdata[ATTACK3_NE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 2:
+                                self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 2:
+                            self.gcvdata[ATTACK4_NE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 2:
+                                self.gcvdata[ATTACK3_NE_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 2:
+                        self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 2:
+                            self.gcvdata[ATTACK2_NE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 2:
+                                self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 2:
+                            self.gcvdata[ATTACK4_NE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 2:
+                                self.gcvdata[ATTACK2_NE_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 2:
+                        self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 2:
+                            self.gcvdata[ATTACK2_NE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 2:
+                                self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 2:
+                            self.gcvdata[ATTACK3_NE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 2:
+                                self.gcvdata[ATTACK2_NE_OFFSET] = True
+            elif Attack_2_Setup == 4 and Attack_Selection == 2:
+                if Attack_2 == 2:
+                    self.gcvdata[ATTACK2_NE_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 2:
+                        self.gcvdata[ATTACK1_NE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 2:
+                            self.gcvdata[ATTACK3_NE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 2:
+                                self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 2:
+                            self.gcvdata[ATTACK4_NE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 2:
+                                self.gcvdata[ATTACK3_NE_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 2:
+                        self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 2:
+                            self.gcvdata[ATTACK1_NE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 2:
+                                self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 2:
+                            self.gcvdata[ATTACK4_NE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 2:
+                                self.gcvdata[ATTACK1_NE_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 2:
+                        self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 2:
+                            self.gcvdata[ATTACK1_NE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 2:
+                                self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 2:
+                            self.gcvdata[ATTACK3_NE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 2:
+                                self.gcvdata[ATTACK1_NE_OFFSET] = True
+            elif Attack_3_Setup == 4 and Attack_Selection == 2:
+                if Attack_3 == 2:
+                    self.gcvdata[ATTACK3_NE_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 2:
+                        self.gcvdata[ATTACK1_NE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 2:
+                            self.gcvdata[ATTACK2_NE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 2:
+                                self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 2:
+                            self.gcvdata[ATTACK4_NE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 2:
+                                self.gcvdata[ATTACK2_NE_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 2:
+                        self.gcvdata[ATTACK2_NE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 2:
+                            self.gcvdata[ATTACK1_NE_OFFSET] = True
+                        elif Attack_4_Setup == 1:
+                            if Attack_4 == 2:
+                                self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_4_Setup == 2:
+                        if Attack_4 == 2:
+                            self.gcvdata[ATTACK4_NE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 2:
+                                self.gcvdata[ATTACK1_NE_OFFSET] = True
+                elif Attack_4_Setup == 3:
+                    if Attack_4 == 2:
+                        self.gcvdata[ATTACK4_NE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 2:
+                            self.gcvdata[ATTACK1_NE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 2:
+                                self.gcvdata[ATTACK2_NE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 2:
+                            self.gcvdata[ATTACK2_NE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 2:
+                                self.gcvdata[ATTACK1_NE_OFFSET] = True
+            elif Attack_4_Setup == 4 and Attack_Selection == 2:
+                if Attack_4 == 2:
+                    self.gcvdata[ATTACK4_NE_OFFSET] = True
+                elif Attack_1_Setup == 3:
+                    if Attack_1 == 2:
+                        self.gcvdata[ATTACK1_NE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 2:
+                            self.gcvdata[ATTACK2_NE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 2:
+                                self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 2:
+                            self.gcvdata[ATTACK3_NE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 2:
+                                self.gcvdata[ATTACK2_NE_OFFSET] = True
+                elif Attack_2_Setup == 3:
+                    if Attack_2 == 2:
+                        self.gcvdata[ATTACK2_NE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 2:
+                            self.gcvdata[ATTACK1_NE_OFFSET] = True
+                        elif Attack_3_Setup == 1:
+                            if Attack_3 == 2:
+                                self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_3_Setup == 2:
+                        if Attack_3 == 2:
+                            self.gcvdata[ATTACK3_NE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 2:
+                                self.gcvdata[ATTACK1_NE_OFFSET] = True
+                elif Attack_3_Setup == 3:
+                    if Attack_3 == 2:
+                        self.gcvdata[ATTACK3_NE_OFFSET] = True
+                    elif Attack_1_Setup == 2:
+                        if Attack_1 == 2:
+                            self.gcvdata[ATTACK1_NE_OFFSET] = True
+                        elif Attack_2_Setup == 1:
+                            if Attack_2 == 2:
+                                self.gcvdata[ATTACK2_NE_OFFSET] = True
+                    elif Attack_2_Setup == 2:
+                        if Attack_2 == 2:
+                            self.gcvdata[ATTACK2_NE_OFFSET] = True
+                        elif Attack_1_Setup == 1:
+                            if Attack_1 == 2:
+                                self.gcvdata[ATTACK1_NE_OFFSET] = True
+
         elif similar_inAttack == ATTACK_DATASET:
             pass
         else:
             self.inAttack = True
             inAttack = 0
             self.gcvdata[ATTACK_OFFSET] = False
+            Attack_1 = 0
+            Attack_2 = 0
+            Attack_3 = 0
+            Attack_4 = 0
+            Attack_Selection = 0
+            self.gcvdata[ATTACK1_SE_OFFSET] = False
+            self.gcvdata[ATTACK1_EF_OFFSET] = False
+            self.gcvdata[ATTACK1_NE_OFFSET] = False
+            self.gcvdata[ATTACK2_SE_OFFSET] = False
+            self.gcvdata[ATTACK2_EF_OFFSET] = False
+            self.gcvdata[ATTACK2_NE_OFFSET] = False
+            self.gcvdata[ATTACK3_SE_OFFSET] = False
+            self.gcvdata[ATTACK3_EF_OFFSET] = False
+            self.gcvdata[ATTACK3_NE_OFFSET] = False
+            self.gcvdata[ATTACK4_SE_OFFSET] = False
+            self.gcvdata[ATTACK4_EF_OFFSET] = False
+            self.gcvdata[ATTACK4_NE_OFFSET] = False
 
         return frame, self.gcvdata

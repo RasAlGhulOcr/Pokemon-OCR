@@ -4,22 +4,244 @@
 //
 // ----------------------------------------------------------------------------------------------------------------
 
+bool fight;
+bool poke;
+bool bag;
 bool escape;
+bool attack;
+bool attack_1_se;
+bool attack_1_ef;
+bool attack_1_ne;
+bool attack_2_se;
+bool attack_2_ef;
+bool attack_2_ne;
+bool attack_3_se;
+bool attack_3_ef;
+bool attack_3_ne;
+bool attack_4_se;
+bool attack_4_ef;
+bool attack_4_ne;
+bool attack_found = FALSE;
+
+#define presstime 300
+
+// MAIN
+//
+// ----------------------------------------------------------------------------------------------------------------
+
 
 main {
 	
-	if(gcv_ready()) { 
-		escape = gcv_read(3); 
+	if(gcv_ready()) {
+		fight = gcv_read(0);
+		poke = gcv_read(1);
+		bag = gcv_read(2);
+		escape = gcv_read(3);
+		attack = gcv_read(4);
+		attack_1_se = gcv_read(11);
+		attack_1_ef = gcv_read(12);
+		attack_1_ne = gcv_read(13);
+		attack_2_se = gcv_read(14);
+		attack_2_ef = gcv_read(15);
+		attack_2_ne = gcv_read(16);
+		attack_3_se = gcv_read(17);
+		attack_3_ef = gcv_read(18);
+		attack_3_ne = gcv_read(19);
+		attack_4_se = gcv_read(20);
+		attack_4_ef = gcv_read(21);
+		attack_4_ne = gcv_read(22);
 	}
-		
+	
+	if(fight) {
+		combo_stop(cAttack1);
+		combo_stop(cAttack2);
+		combo_stop(cAttack3);
+		combo_stop(cAttack4);
+		combo_run(cFight);
+	}
+	
+	if(poke) {
+		combo_run(cPoke);
+	}
+	
+	if(bag) {
+		combo_run(cBag);
+	}
+	
 	if(escape) {
 		combo_run(cEscape);
 	}
+	
+	if(attack) {
+		combo_run(cAttack);
+	}
+	
+	if(attack_1_se && !attack_found) {
+		combo_run(cAttack1);
+	}
+	
+	if(attack_2_se && !attack_found) {
+		combo_run(cAttack2);
+	}
+	
+	if(attack_3_se && !attack_found) {
+		combo_run(cAttack3);
+	}
+	
+	if(attack_4_se && !attack_found) {
+		combo_run(cAttack4);
+	}
+	
+	if(attack_1_ef && !attack_found) {
+		combo_run(cAttack1);
+	}
+	
+	if(attack_2_ef && !attack_found) {
+		combo_run(cAttack2);
+	}
+	
+	if(attack_3_ef && !attack_found) {
+		combo_run(cAttack3);
+	}
+	
+	if(attack_4_ef && !attack_found) {
+		combo_run(cAttack4);
+	}
+	
+	if(attack_1_ne && !attack_found) {
+		combo_run(cAttack1);
+	}
+	
+	if(attack_2_ne && !attack_found) {
+		combo_run(cAttack2);
+	}
+	
+	if(attack_3_ne && !attack_found) {
+		combo_run(cAttack3);
+	}
+	
+	if(attack_4_ne && !attack_found) {
+		combo_run(cAttack4);
+	}
+	
+	if(attack_found) {
+		printf("Attack founded");
+	}
+}
+
+// KEYS
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+combo pX {
+	wait(presstime);
+	set_val(BUTTON_14, 100);
+	wait(presstime);
+	set_val(BUTTON_14, 0);
+}
+
+combo pA {
+	wait(presstime);
+	set_val(BUTTON_15, 100);
+	wait(presstime);
+	set_val(BUTTON_15, 0);
+}
+
+combo pB {
+	wait(presstime);
+	set_val(BUTTON_16, 100);
+	wait(presstime);
+	set_val(BUTTON_16, 0);
+}
+
+combo pY {
+	wait(presstime);
+	set_val(BUTTON_17, 100);
+	wait(presstime);
+	set_val(BUTTON_17, 0);
+}
+
+combo pUP {
+	wait(50);
+	set_val(BUTTON_10, 100);
+	wait(50);
+	set_val(BUTTON_10, 0);
+}
+
+combo pRIGHT {
+	wait(50);
+	set_val(BUTTON_13, 100);
+	wait(50);
+	set_val(BUTTON_13, 0);
+}
+
+combo pDOWN {
+	wait(50);
+	set_val(BUTTON_11, 100);
+	wait(50);
+	set_val(BUTTON_11, 0);
+}
+
+combo pLEFT {
+	wait(50);
+	set_val(BUTTON_12, 100);
+	wait(50);
+	set_val(BUTTON_12, 0);
+}
+
+// COMBOS
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+combo cFight {
+	printf("Test Fight Combo");
+}
+
+combo cPoke {
+	printf("Test Poke Combo");
+}
+
+combo cBag {
+	printf("Test Bag Combo");
 }
 
 combo cEscape {
-	wait(300);
-	set_val(BUTTON_15, 100);
-	wait(300);
-	set_val(BUTTON_15, 0);
+	call(pA);
+}
+
+combo cAttack {
+	//printf("Test Attack Combo");
+}
+
+// DEV COMBOS
+//
+// ----------------------------------------------------------------------------------------------------------------
+
+combo cAttack1 {
+	printf("Test Attack 1 Combo gewaehlt");
+	attack_found = TRUE;
+}
+
+combo cAttack2 {
+	wait(50);
+	set_val(BUTTON_11, 100);
+	wait(50);
+	set_val(BUTTON_11, 0);
+	printf("Test Attack 2 Combo gewaehlt");
+	attack_found = TRUE;
+}
+
+combo cAttack3 {
+	call(pDOWN);
+	call(pDOWN);
+	printf("Test Attack 3 Combo gewaehlt");
+	attack_found = TRUE;
+}
+
+combo cAttack4 {
+	call(pDOWN);
+	call(pDOWN);
+	call(pDOWN);
+	printf("Test Attack 4 Combo gewaehlt");
+	attack_found = TRUE;
 }
